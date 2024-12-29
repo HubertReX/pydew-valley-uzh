@@ -114,6 +114,7 @@ class AbstractButton(Component, ABC):
         content: str | pygame.Surface,
         rect: pygame.Rect,
         font=None,
+        tooltip_text: str = None,
     ):
         super().__init__(rect)
         self.initial_rect: pygame.Rect = rect.copy()
@@ -128,6 +129,17 @@ class AbstractButton(Component, ABC):
         self.disabled_color = (200, 200, 200)
 
         self.display_surface = None
+        if self.font and tooltip_text:
+            tooltip_surf = self.font.render(tooltip_text, True, "Black")
+            tooltip_rect = tooltip_surf.get_rect()
+            tooltip_rect.width += 20
+            # self.tooltip = pygame.Surface((tooltip_rect.width + 20, tooltip_rect.height), pygame.SRCALPHA)
+            self.tooltip = pygame.Surface(tooltip_rect.size, pygame.SRCALPHA)
+            self.tooltip.fill(pygame.Color(0, 0, 0, 0))
+            pygame.draw.rect(self.tooltip, "White", tooltip_rect, 0, 4)
+            self.tooltip.blit(tooltip_surf, (10, 0))
+        else:
+            self.tooltip = None
 
     def mouse_hover(self):
         return self.rect.collidepoint(mouse_pos())
@@ -135,6 +147,10 @@ class AbstractButton(Component, ABC):
     def draw_hover(self):
         if self.mouse_hover():
             self.hover_active = True
+            # TODO: draw tooltip here
+            if self.tooltip:
+                tooltip_pos = mouse_pos()
+                self.display_surface.blit(self.tooltip, (tooltip_pos[0], tooltip_pos[1] - self.tooltip.height))
             pygame.draw.rect(self.display_surface, "Black", self.rect, 4, 4)
         else:
             self.hover_active = False
@@ -182,7 +198,7 @@ class Button(AbstractButton):
 class ImageButton(AbstractButton):
     """A button type that can contain an image."""
 
-    def __init__(self, content: pygame.Surface, rect):
+    def __init__(self, content: pygame.Surface, rect, font: pygame.Font = None, tooltip_text: str = None):
         # Force the user to pass an image as content or else raise an error
         if not isinstance(content, pygame.Surface):
             if isinstance(content, str):
@@ -191,7 +207,7 @@ class ImageButton(AbstractButton):
                 f"expected a pygame.Surface instance, got '{content.__class__.__name__}'"
             )
 
-        super().__init__(content, rect)
+        super().__init__(content, rect, font, tooltip_text)
         self.content = self._content
         self._content_rect = self.content.get_frect(center=self.rect.center)
 

@@ -20,8 +20,8 @@ from src.controls import Controls
 
 
 class _IMButton(ImageButton):
-    def __init__(self, content: pygame.Surface, rect: pygame.Rect, name: str):
-        super().__init__(content, rect)
+    def __init__(self, content: pygame.Surface, rect: pygame.Rect, name: str, font: pygame.Font = None):
+        super().__init__(content, rect, tooltip_text=name, font=font)
         self._name = name
 
     @property
@@ -64,10 +64,11 @@ class _EquipButton(_IMButton):
         name: str,
         selected: bool = False,
         draw_checkmark_to_left: bool = False,
+        font: pygame.Font = None,
     ):
         self._contents = [content, None]
         self.__prepare_contents(draw_checkmark_to_left)
-        super().__init__(self._contents[selected], rect, name)
+        super().__init__(self._contents[selected], rect, name, font)
         self._selected = selected
 
     @property
@@ -194,10 +195,15 @@ class InventoryMenu(AbstractMenu):
                 # , _ ,
                 seed = SeedType.from_inventory_resource(ir).as_fts()
                 yield _EquipButton(
-                    calc_img, btn_rect, btn_name, player.current_seed == seed, True
+                    calc_img,
+                    btn_rect,
+                    btn_name,
+                    player.current_seed == seed,
+                    draw_checkmark_to_left=True,
+                    font=self.font,
                 )
             else:
-                yield _IMButton(calc_img, btn_rect, btn_name)
+                yield _IMButton(calc_img, btn_rect, btn_name, font=self.font)
 
     def _ft_btn_setup(self, player, button_size: tuple[int, int]):
         # Portion of the menu to allow the player to select their current tool.
@@ -213,7 +219,8 @@ class InventoryMenu(AbstractMenu):
                 calc_img,
                 btn_rect,
                 tool,
-                player.current_tool.as_serialised_string() == tool,
+                draw_checkmark_to_left=player.current_tool.as_serialised_string() == tool,
+                font=self.font,
             )
 
     def _special_btn_setup(self, player, button_size: tuple[int, int]):
@@ -247,10 +254,14 @@ class InventoryMenu(AbstractMenu):
             rect.y = _TOP_MARGIN + (button_size[1] + _SPACING_BETWEEN_ROWS) * i
             if btn_name == "goggles":
                 yield _EquipButton(
-                    self.cosmetic_frames["goggles"], rect, btn_name, player.has_goggles
+                    self.cosmetic_frames["goggles"],
+                    rect,
+                    btn_name,
+                    draw_checkmark_to_left=player.has_goggles,
+                    font=self.font,
                 )
                 continue
-            yield _IMButton(self.cosmetic_frames[btn_name], rect, btn_name)
+            yield _IMButton(self.cosmetic_frames[btn_name], rect, btn_name, self.font)
 
     def button_action(self, text):
         if text in self._av_tools:
