@@ -249,7 +249,7 @@ class Level:
 
         # watch the player behaviour in achieving tutorial tasks
         self.tile_farmed = False
-        self.crop_planted: set = set()
+        self.crop_planted = False
         self.crop_watered = False
         self.hit_tree = False
 
@@ -468,11 +468,7 @@ class Level:
             case FarmingTool.WATERING_CAN:
                 if self.soil_manager.water(character, pos):
                     # check if the player achieved task "water the crop"
-                    if (
-                        isinstance(character, Player)
-                        and True in self.crop_planted
-                        and pos in self.crop_planted
-                    ):
+                    if isinstance(character, Player):
                         self.crop_watered = True
 
                 self._play_playeronly_sound("water", character)
@@ -484,8 +480,7 @@ class Level:
 
                     # check if the player achieved task "plant a crop"
                     if isinstance(character, Player):
-                        self.crop_planted.add(True)
-                        self.crop_planted.add(pos)
+                        self.crop_planted = True
                 else:
                     self._play_playeronly_sound("cant_plant", character)
 
