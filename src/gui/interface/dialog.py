@@ -178,6 +178,12 @@ class DialogueManager:
         self._tb_list[self._msg_index - 1].kill()
         self._tb_list[self._msg_index].add(self.spr_grp)
 
+    def finished_advancing(self) -> bool:
+        if self._msg_index:
+            return self._get_current_tb().finished_advancing
+        else:
+            return True
+
     def _get_current_tb(self):
         return self._tb_list[self._msg_index]
 

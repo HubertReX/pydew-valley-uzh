@@ -47,8 +47,8 @@ class Tutorial:
             8: self.interact_with_outgroup_member,
             9: self.walk_around_outgroup_farm_and_switch_to_outgroup,
         }
-        self.tasks_achieved = [False for _ in range(10)]
-        self.current_task_index = 0
+        self.tasks_achieved = [False for _ in range(11)]
+        self.current_task_index = -1
 
     # show instructions text boxes
 
@@ -123,24 +123,11 @@ class Tutorial:
     def check_tasks(self, game_paused):
         # first_not_done = next((i for i, j in enumerate(self.tasks_achieved) if j), None)
         for task_id, achieved in enumerate(self.tasks_achieved):
-
             if achieved:
                 continue
 
             match task_id:
                 case 0:
-                    # check if the player achieved task "Basic movement"
-                    if (
-                        0 not in self.movement_axis
-                        and self.dialogue_manager._get_current_tb().finished_advancing
-                    ):
-                        # TODO: fix this
-                        self.tasks_achieved[task_id] = True
-                        if self.current_task_index < task_id:
-                            self.switch_to_task(task_id)
-                    else:
-                        self.current_task_index = task_id
-
                     if self.player.direction.x < 0:
                         self.movement_axis[0] = self.player.direction.x
                     elif self.player.direction.x > 0:
@@ -150,114 +137,136 @@ class Tutorial:
                     elif self.player.direction.y > 0:
                         self.movement_axis[3] = self.player.direction.y
 
+                    # check if the player achieved task "Basic movement"
+                    if (
+                        0 not in self.movement_axis
+                        and self.dialogue_manager.finished_advancing()
+                    ):
+                        self.tasks_achieved[task_id] = True
+                        for i in range(8):
+                            self.tasks_achieved[i] = True
+
                 case 1:
                     # check if the player achieved task "interact with an ingroup member"
                     if (
-                        self.dialogue_manager._get_current_tb().finished_advancing
+                        self.dialogue_manager.finished_advancing()
                         and self.player.ingroup_member_interacted
                     ):
                         self.tasks_achieved[task_id] = True
-                        if self.current_task_index < task_id:
-                            self.switch_to_task(task_id)
-                    else:
-                        self.current_task_index = task_id
 
                 case 2:
                     # check if the player achieved task "farm with your hoe"
                     if (
-                        self.dialogue_manager._get_current_tb().finished_advancing
+                        self.dialogue_manager.finished_advancing()
                         and self.level.tile_farmed
                     ):
                         self.tasks_achieved[task_id] = True
-                        if self.current_task_index < task_id:
-                            self.switch_to_task(task_id)
-                    else:
-                        self.current_task_index = task_id
 
                 case 3:
                     # check if the player achieved task "plant a crop"
                     if (
-                        True in self.level.crop_planted
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        self.level.crop_planted
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.switch_to_task(4)
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
                 case 4:
                     # check if the player achieved task "water the crop"
                     if (
                         self.level.crop_watered
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.switch_to_task(5)
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
                 case 5:
                     # check if the player achieved task "go to the forest and hit a tree"
                     if (
                         self.level.hit_tree
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.switch_to_task(6)
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
                 case 6:
                     # check if the player achieved task "go to the marketplace and buy or sell something"
                     if (
                         self.player.bought_sold
                         and not game_paused
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.switch_to_task(7)
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
                 case 7:
                     # check if the player achieved task "go to the minigame area and play "
                     if (
                         self.player.minigame_finished
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.switch_to_task(8)
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
                 case 8:
                     # check if the player achieved task "interact with an outgroup member"
                     if (
                         self.player.outgroup_member_interacted
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
                         if self.round_config.get("playable_outgroup", False):
-                            self.switch_to_task(9)
-                            self.tasks_achieved += 1
+                            self.tasks_achieved[task_id] = True
 
-                            self.player.outgroup_member_interacted = False
+                            # self.player.outgroup_member_interacted = False
                         else:
-                            self.show_tutorial_end()
-                            self.tasks_achieved = 10
+                            self.tasks_achieved[task_id] = True
+                            print("skip step 9", self.tasks_achieved)
+                            self.tasks_achieved[9] = True
+                            print("skip step 9", self.tasks_achieved)
 
-                            self.player.blocked = True
+                            # self.player.blocked = True
 
                 case 9:
                     # check if the player achieved task "walk around the outgroup farm and switch to the outgroup"
+                    # print("task 9", self.player.study_group == StudyGroup.OUTGROUP,
+                    #       self.dialogue_manager.finished_advancing())
                     if (
                         self.player.study_group == StudyGroup.OUTGROUP
-                        and self.dialogue_manager._get_current_tb().finished_advancing
+                        and self.dialogue_manager.finished_advancing()
                     ):
-                        self.show_tutorial_end()
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
 
-                        self.player.blocked = True
+                        # self.player.blocked = True
 
                 case 10:
                     # check if the player interacted to complete the tutorial
                     if (
-                        self.dialogue_manager._get_current_tb().finished_advancing
+                        self.dialogue_manager.finished_advancing()
                         and self.player.controls.INTERACT.hold
                     ):
                         self.player.blocked = False
                         self.dialogue_manager._purge_tb_list()
-                        self.tasks_achieved += 1
+                        self.tasks_achieved[task_id] = True
                         self.level.player.save_file.is_tutorial_completed = True
+
+        # new_task_id = -1
+        # if self.tasks_achieved[8]:
+        #     print("after skip step 9", self.tasks_achieved)
+        for new_task_id, achieved in enumerate(self.tasks_achieved):
+            if not achieved:
+                break
+
+        print(
+            "task",
+            self.current_task_index,
+            new_task_id,
+            "|",
+            self.tasks_achieved,
+            "|",
+            self.dialogue_manager.finished_advancing(),
+            self.movement_axis,
+        )
+
+        if self.current_task_index < new_task_id:
+            if new_task_id == 10:
+                self.player.blocked = True
+            print("switching task", self.current_task_index, new_task_id)
+            self.switch_to_task(new_task_id)
 
     # run at the beginning of the tutorial
     def ready(self):
